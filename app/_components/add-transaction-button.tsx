@@ -43,6 +43,8 @@ import {
 } from "../_constants/transactions";
 import { MoneyInput } from "./money-input";
 import { DatePicker } from "./ui/date-picker";
+import { addTransaction } from "../_actions/add-transaction";
+import { useState } from "react";
 
 const formSchema = z.object({
   name: z.string().trim().min(1, {
@@ -72,10 +74,12 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>;
 
 const AddTransactionButton = () => {
+  const [dialogIsOpen, setDialogIsOpen] = useState(false);
+
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      amount: 0,
+      amount: 50,
       name: "",
       type: TransactionType.EXPENSE,
       category: TransactionCategory.OTHER,
@@ -84,12 +88,24 @@ const AddTransactionButton = () => {
     },
   });
 
-  const onSubmit = (data: FormSchema) => {
-    console.log(data);
+  const onSubmit = async (data: FormSchema) => {
+    try {
+      await addTransaction(data);
+      setDialogIsOpen(false);
+      form.reset();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
-    <Dialog onOpenChange={(isOpen) => !isOpen && form.reset()}>
+    <Dialog
+      onOpenChange={(isOpen) => {
+        setDialogIsOpen(isOpen);
+        if (!isOpen) form.reset();
+      }}
+      open={dialogIsOpen}
+    >
       <DialogTrigger asChild>
         <Button className="rounded-full font-bold">
           Adicionar transação
