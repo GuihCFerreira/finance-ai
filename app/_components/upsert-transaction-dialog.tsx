@@ -41,6 +41,7 @@ import {
 import { MoneyInput } from "./money-input";
 import { DatePicker } from "./ui/date-picker";
 import { upsertTransaction } from "../_actions/upsert-transaction";
+import { toast } from "sonner";
 
 interface UpsertDialogTransactionProps {
   isOpen: boolean;
@@ -99,8 +100,12 @@ const UpsertDialogTransaction = ({
       await upsertTransaction({ ...data, id: transactionId });
       setIsOpen(false);
       form.reset();
+      toast.success(
+        `Transação ${isUpdate ? "atualizada" : "adicionada"} com sucesso!`,
+      );
     } catch (error) {
       console.error(error);
+      toast.error("Erro ao salvar transação.");
     }
   };
 
