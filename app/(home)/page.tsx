@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import Navbar from "../_components/navbar";
 import SummaryCards from "./_components/summary-cards";
 import TimeSelect from "./_components/time-select";
-import { format, isMatch } from "date-fns";
-import TransactionPieChart from "./_components/transactions-pie-chart";
+import { isMatch } from "date-fns";
+import TransactionsPieChart from "./_components/transactions-pie-chart";
 import { getDashboard } from "../_data/get-dashboard";
 import ExpensesPerCategory from "./_components/expenses-per-category";
 import LastTransactions from "./_components/last-transactions";
@@ -12,29 +12,24 @@ import { canUserAddTransaction } from "../_data/can-user-add-transaction";
 import AiReportButton from "./_components/ai-report-button";
 
 interface HomeProps {
-  searchParams: {
-    month: string;
-  };
+  searchParams: Promise<{ month: string } | { [key: string]: string }>;
 }
 
-export default async function Home({ searchParams }: HomeProps) {
-  const { month } = searchParams;
+const Home = async ({ searchParams }: HomeProps) => {
+  const resolvedSearchParams = await searchParams;
+  const month = resolvedSearchParams?.month;
 
   const { userId } = await auth();
-
-  if (!userId) redirect("/login");
-
+  if (!userId) {
+    redirect("/login");
+  }
   const monthIsInvalid = !month || !isMatch(month, "MM");
   if (monthIsInvalid) {
-    const month = format(new Date(), "MM");
-    redirect(`/?month=${month}`);
+    redirect(`?month=${new Date().getMonth() + 1}`);
   }
-
+  const dashboard = await getDashboard(month);
   const userCanAddTransaction = await canUserAddTransaction();
   const user = await clerkClient().users.getUser(userId);
-
-  const dashboard = await getDashboard(month);
-
   return (
     <>
       <Navbar />
@@ -51,16 +46,15 @@ export default async function Home({ searchParams }: HomeProps) {
             <TimeSelect />
           </div>
         </div>
-
-        <div className="grid grid-cols-[2fr,1fr] gap-6 overflow-hidden">
-          <div className="flex flex-col gap-6">
+        <div className="grid h-full grid-cols-[2fr,1fr] gap-6 overflow-hidden">
+          <div className="flex flex-col gap-6 overflow-hidden">
             <SummaryCards
               month={month}
-              {...JSON.parse(JSON.stringify(dashboard))}
+              {...dashboard}
               userCanAddTransaction={userCanAddTransaction}
             />
-            <div className="grid grid-cols-3 grid-rows-1 gap-6">
-              <TransactionPieChart {...JSON.parse(JSON.stringify(dashboard))} />
+            <div className="grid h-full grid-cols-3 grid-rows-1 gap-6 overflow-hidden">
+              <TransactionsPieChart {...dashboard} />
               <ExpensesPerCategory
                 expensesPerCategory={dashboard.totalExpensePerCategory}
               />
@@ -71,4 +65,6 @@ export default async function Home({ searchParams }: HomeProps) {
       </div>
     </>
   );
-}
+};
+
+export default Home;
