@@ -17,7 +17,9 @@ interface HomeProps {
   };
 }
 
-export default async function Home({ searchParams: { month } }: HomeProps) {
+export default async function Home({ searchParams }: HomeProps) {
+  const { month } = searchParams;
+
   const { userId } = await auth();
 
   if (!userId) redirect("/login");
