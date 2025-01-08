@@ -17,7 +17,9 @@ interface HomeProps {
 
 const Home = async ({ searchParams }: HomeProps) => {
   const resolvedSearchParams = await searchParams;
-  const month = resolvedSearchParams?.month;
+  const month = resolvedSearchParams?.month
+    ? resolvedSearchParams?.month
+    : "01";
 
   const { userId } = await auth();
   if (!userId) {
